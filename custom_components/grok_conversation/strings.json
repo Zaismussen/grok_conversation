@@ -78,7 +78,8 @@
           "tts_voice": "Default TTS voice",
           "tts_language": "Default TTS language",
           "tts_speed": "TTS speed (0.7–1.5)",
-          "stt_language": "Default STT language"
+          "stt_language": "Default STT language",
+          "stt_keyterms": "STT key terms (names / vocabulary)"
         },
         "data_description": {
           "prompt": "Instruct how the LLM should respond. This can be a template.",
@@ -95,14 +96,17 @@
           "enable_stt": "Registers an xAI Grok STT engine selectable under Settings → Voice assistants.",
           "tts_voice": "Default voice when Assist does not override (Eve, Ara, Rex, …).",
           "tts_language": "BCP-47 language for synthesis (en, es-ES, pt-BR, …).",
-          "stt_language": "Language hint for transcription formatting."
+          "stt_language": "Language hint for transcription formatting.",
+          "stt_keyterms": "Words or names the speech-to-text engine should listen for, e.g. pet names or unusual device names (Elowen). One per line or comma-separated. Sent to xAI as keyterm hints; max 100 terms, 50 characters each. Leave empty to disable."
         }
       }
     },
     "error": {
       "model_not_supported": "This model is not supported, please select a different model",
       "model_retired": "This model has been retired by xAI. Choose a current model such as grok-4.3.",
-      "llm_api_not_found": "Could not match that LLM HASS API. Pick “Assist” / Home Assistant from the list (not a free-text value), or leave No control for chat-only."
+      "llm_api_not_found": "Could not match that LLM HASS API. Pick “Assist” / Home Assistant from the list (not a free-text value), or leave No control for chat-only.",
+      "stt_keyterms_too_many": "Too many STT key terms (xAI allows at most 100).",
+      "stt_keyterm_too_long": "Each STT key term must be 50 characters or fewer."
     }
   },
   "services": {

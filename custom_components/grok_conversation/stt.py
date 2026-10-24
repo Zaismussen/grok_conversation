@@ -26,9 +26,11 @@ from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from .const import DOMAIN
 from .voice_api import XAIVoiceError, async_stt
 from .voice_const import (
+    CONF_STT_KEYTERMS,
     CONF_STT_LANGUAGE,
     RECOMMENDED_STT_LANGUAGE,
     STT_LANGUAGES,
+    parse_stt_keyterms,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -115,14 +117,16 @@ class XAIGrokSTTEntity(SpeechToTextEntity):
         sample_rate = int(metadata.sample_rate or 16000)
         channels = 1 if metadata.channel == AudioChannels.CHANNEL_MONO else 2
         is_pcm = metadata.codec == AudioCodecs.PCM
+        keyterms = parse_stt_keyterms(self._entry.options.get(CONF_STT_KEYTERMS))
 
         _LOGGER.debug(
-            "xAI STT: bytes=%s lang=%s rate=%s codec=%s channels=%s",
+            "xAI STT: bytes=%s lang=%s rate=%s codec=%s channels=%s keyterms=%s",
             len(audio),
             language,
             sample_rate,
             metadata.codec,
             channels,
+            len(keyterms),
         )
 
         api_key = self._entry.data.get("api_key", "")
@@ -138,6 +142,7 @@ class XAIGrokSTTEntity(SpeechToTextEntity):
                     sample_rate=sample_rate,
                     is_raw_pcm=True,
                     channels=channels,
+                    keyterms=keyterms,
                 )
             else:
                 # OGG/Opus or other container — send as-is
@@ -151,6 +156,7 @@ class XAIGrokSTTEntity(SpeechToTextEntity):
                     is_raw_pcm=False,
                     filename=f"audio.{ext}",
                     content_type=ctype,
+                    keyterms=keyterms,
                 )
         except XAIVoiceError as err:
             _LOGGER.error("xAI STT error: %s", err)

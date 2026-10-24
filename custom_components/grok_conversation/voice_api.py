@@ -15,6 +15,7 @@ from .voice_const import (
     XAI_VOICES_URL,
     normalize_stt_language,
     normalize_tts_language,
+    parse_stt_keyterms,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -213,8 +214,14 @@ async def async_stt(
     channels: int = 1,
     filename: str = "audio.wav",
     content_type: str = "audio/wav",
+    keyterms: list[str] | None = None,
 ) -> str:
-    """Transcribe audio bytes; returns transcript text."""
+    """Transcribe audio bytes; returns transcript text.
+
+    ``keyterms`` biases recognition toward names / proper nouns; each term is
+    sent as a repeated ``keyterm`` form field (limits enforced by
+    ``parse_stt_keyterms``). Empty / None sends nothing.
+    """
     if not audio:
         raise XAIVoiceError("Empty audio for STT")
 
@@ -232,6 +239,8 @@ async def async_stt(
     if lang:
         form.add_field("language", lang)
         form.add_field("format", "true")
+    for term in parse_stt_keyterms(keyterms or []):
+        form.add_field("keyterm", term)
     form.add_field(
         "file",
         audio,
