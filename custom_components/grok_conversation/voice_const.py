@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import re
+
 from homeassistant.components.tts import ATTR_VOICE
 
 # Config option keys
@@ -10,6 +12,7 @@ CONF_TTS_LANGUAGE = "tts_language"
 CONF_TTS_SPEED = "tts_speed"
 CONF_STT_LANGUAGE = "stt_language"
 CONF_STT_FORMAT = "stt_format"
+CONF_STT_KEYTERMS = "stt_keyterms"
 CONF_ENABLE_TTS = "enable_tts"
 CONF_ENABLE_STT = "enable_stt"
 CONF_VOICE_API_OK = "voice_api_ok"
@@ -18,6 +21,7 @@ RECOMMENDED_TTS_VOICE = "eve"
 RECOMMENDED_TTS_LANGUAGE = "en"
 RECOMMENDED_TTS_SPEED = 1.0
 RECOMMENDED_STT_LANGUAGE = "en"
+RECOMMENDED_STT_KEYTERMS = ""
 RECOMMENDED_ENABLE_TTS = True
 RECOMMENDED_ENABLE_STT = True
 
@@ -25,6 +29,11 @@ XAI_API_BASE = "https://api.x.ai/v1"
 XAI_TTS_URL = f"{XAI_API_BASE}/tts"
 XAI_STT_URL = f"{XAI_API_BASE}/stt"
 XAI_VOICES_URL = f"{XAI_API_BASE}/tts/voices"
+
+# STT keyterm limits from https://docs.x.ai/developers/rest-api-reference/inference/speech-to-text
+# (``keyterm`` form field, repeatable: max 100 terms, each up to 50 characters).
+STT_KEYTERM_MAX_COUNT = 100
+STT_KEYTERM_MAX_LENGTH = 50
 
 # Built-in voices from xAI docs (voice_id → display label)
 XAI_VOICES: dict[str, str] = {
@@ -175,6 +184,42 @@ def normalize_stt_language(language: str | None) -> str | None:
     if primary in known:
         return primary
     return primary or RECOMMENDED_STT_LANGUAGE
+
+
+def split_stt_keyterms(raw: str | list[str] | None) -> list[str]:
+    """Split a keyterm option (newline/comma separated text or list) into terms.
+
+    Whitespace is collapsed, blanks are dropped and duplicates are removed
+    case-insensitively (first spelling wins). Limits are not applied here.
+    """
+    if not raw:
+        return []
+    items = raw if isinstance(raw, list) else re.split(r"[\n,;]+", str(raw))
+    terms: list[str] = []
+    seen: set[str] = set()
+    for item in items:
+        term = " ".join(str(item).split())
+        if not term:
+            continue
+        key = term.casefold()
+        if key in seen:
+            continue
+        seen.add(key)
+        terms.append(term)
+    return terms
+
+
+def parse_stt_keyterms(raw: str | list[str] | None) -> list[str]:
+    """Return keyterms ready to send to xAI STT, enforcing documented limits.
+
+    Terms longer than ``STT_KEYTERM_MAX_LENGTH`` are skipped (a truncated
+    term would bias toward the wrong word) and at most
+    ``STT_KEYTERM_MAX_COUNT`` terms are returned.
+    """
+    terms = [
+        t for t in split_stt_keyterms(raw) if len(t) <= STT_KEYTERM_MAX_LENGTH
+    ]
+    return terms[:STT_KEYTERM_MAX_COUNT]
 
 
 # Re-export for options

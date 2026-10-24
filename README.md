@@ -100,6 +100,7 @@ Setup probes your key against the Voice endpoints. If chat works but TTS/STT fai
 | Default TTS language | `en`, `es-ES`, `pt-BR`, … |
 | TTS speed | 0.7–1.5 |
 | Default STT language | Formatting language for transcripts |
+| STT key terms | Names / vocabulary to bias xAI STT toward (one per line or comma-separated, e.g. `Elowen`). Sent as repeated `keyterm` fields; max 100 terms × 50 chars. Empty = off |
 | Live Search | off / web / x / full |
 | Interaction mode | tools / pipeline / chat_only |
 | AI Task subentry | Name, chat model, image model (`ai_task.generate_image`; use `grok-imagine-image-2.0` for reference edits) |
@@ -206,6 +207,8 @@ CI: Hassfest + HACS validation + pytest on push/PR/nightly.
 ---
 
 ## Version
+
+**1.12.0-andy.1** (fork) — STT key terms: new **STT key terms (names / vocabulary)** option under **Configure**. Enter names or unusual words (one per line or comma-separated) and the xAI STT entity sends each as a repeated `keyterm` form field on `POST /v1/stt` to bias recognition toward them (e.g. a pet named "Elowen" instead of "a Lowens"). Terms are whitespace-normalized and deduplicated case-insensitively; the options form rejects more than 100 terms or any term over 50 characters (xAI limits, see [docs](https://docs.x.ai/developers/rest-api-reference/inference/speech-to-text)). Empty (default) sends nothing — behavior unchanged.
 
 **1.11.1** — Test coverage for in-allowlist symlink reference paths: assert `_stat_and_read_path` (and the allowlist check) receive the resolved target path, not `Path(ref)` (#47). No behavior change.
 

@@ -75,20 +75,24 @@
           "tts_voice": "Default TTS voice",
           "tts_language": "Default TTS language",
           "tts_speed": "TTS speed (0.7–1.5)",
-          "stt_language": "Default STT language"
+          "stt_language": "Default STT language",
+          "stt_keyterms": "STT key terms (names / vocabulary)"
         },
         "data_description": {
           "reasoning_effort": "Controls reasoning effort for Grok reasoning models (provider default / low / medium / high). Provider default omits the parameter so xAI applies its own default (often high); it does not disable reasoning.",
           "vision_model": "Fallback for image services and AI Task attachments when the chat model cannot take images. An image-capable chat model always wins; this option is only used as a fallback. Default grok-4.3.",
           "fast_model": "Used when auto-routing detects a short/simple command. Default grok-4.3 (no separate fast model after the May 15 2026 retirement).",
-          "fallback_model": "Tried automatically if the primary model errors. Default grok-4.3."
+          "fallback_model": "Tried automatically if the primary model errors. Default grok-4.3.",
+          "stt_keyterms": "Words or names the speech-to-text engine should listen for, e.g. pet names or unusual device names (Elowen). One per line or comma-separated. Sent to xAI as keyterm hints; max 100 terms, 50 characters each. Leave empty to disable."
         }
       }
     },
     "error": {
       "model_not_supported": "This model is not supported, please select a different model",
       "model_retired": "This model has been retired by xAI. Choose a current model such as grok-4.3.",
-      "llm_api_not_found": "The selected LLM HASS API is not available."
+      "llm_api_not_found": "The selected LLM HASS API is not available.",
+      "stt_keyterms_too_many": "Too many STT key terms (xAI allows at most 100).",
+      "stt_keyterm_too_long": "Each STT key term must be 50 characters or fewer."
     }
   },
   "services": {

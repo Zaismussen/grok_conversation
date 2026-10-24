@@ -91,19 +91,24 @@ from .api_helpers import async_list_chat_models, is_chat_model_id
 from .voice_const import (
     CONF_ENABLE_STT,
     CONF_ENABLE_TTS,
+    CONF_STT_KEYTERMS,
     CONF_STT_LANGUAGE,
     CONF_TTS_LANGUAGE,
     CONF_TTS_SPEED,
     CONF_TTS_VOICE,
     RECOMMENDED_ENABLE_STT,
     RECOMMENDED_ENABLE_TTS,
+    RECOMMENDED_STT_KEYTERMS,
     RECOMMENDED_STT_LANGUAGE,
     RECOMMENDED_TTS_LANGUAGE,
     RECOMMENDED_TTS_SPEED,
     RECOMMENDED_TTS_VOICE,
+    STT_KEYTERM_MAX_COUNT,
+    STT_KEYTERM_MAX_LENGTH,
     STT_LANGUAGES,
     TTS_LANGUAGES,
     XAI_VOICES,
+    split_stt_keyterms,
 )
 from .voice_api import async_validate_voice_access
 
@@ -135,6 +140,7 @@ RECOMMENDED_OPTIONS = {
     CONF_TTS_LANGUAGE: RECOMMENDED_TTS_LANGUAGE,
     CONF_TTS_SPEED: RECOMMENDED_TTS_SPEED,
     CONF_STT_LANGUAGE: RECOMMENDED_STT_LANGUAGE,
+    CONF_STT_KEYTERMS: RECOMMENDED_STT_KEYTERMS,
 }
 
 
@@ -409,6 +415,12 @@ class OpenAIOptionsFlow(OptionsFlow):
                 ):
                     errors[CONF_VISION_MODEL] = "model_not_supported"
 
+                keyterm_error = validate_stt_keyterms(
+                    user_input.get(CONF_STT_KEYTERMS)
+                )
+                if keyterm_error:
+                    errors[CONF_STT_KEYTERMS] = keyterm_error
+
                 if not errors:
                     return self.async_create_entry(title="", data=user_input)
             else:
@@ -428,6 +440,16 @@ class OpenAIOptionsFlow(OptionsFlow):
             data_schema=vol.Schema(schema),
             errors=errors,
         )
+
+
+def validate_stt_keyterms(raw: Any) -> str | None:
+    """Return an error key if the STT keyterm option exceeds xAI limits."""
+    terms = split_stt_keyterms(raw if isinstance(raw, (str, list)) else None)
+    if len(terms) > STT_KEYTERM_MAX_COUNT:
+        return "stt_keyterms_too_many"
+    if any(len(t) > STT_KEYTERM_MAX_LENGTH for t in terms):
+        return "stt_keyterm_too_long"
+    return None
 
 
 def _model_select(
@@ -692,6 +714,15 @@ def openai_config_option_schema(
                 mode=SelectSelectorMode.DROPDOWN,
             )
         ),
+        vol.Optional(
+            CONF_STT_KEYTERMS,
+            description={
+                "suggested_value": options.get(
+                    CONF_STT_KEYTERMS, RECOMMENDED_STT_KEYTERMS
+                )
+            },
+            default=RECOMMENDED_STT_KEYTERMS,
+        ): TextSelector(TextSelectorConfig(multiline=True)),
         vol.Required(
             CONF_RECOMMENDED, default=options.get(CONF_RECOMMENDED, True)
         ): bool,
